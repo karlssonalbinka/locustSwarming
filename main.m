@@ -37,6 +37,7 @@ W_m(1:N) = 1;
 % W_a = lowerLimit + rand(1, N) * (upperLimit-lowerLimit);    % reaction to approaching locusts
 % W_m = lowerLimit + rand(1, N) * (upperLimit-lowerLimit);    % reaction to moving away locusts
 W_r = 2;                    % repelling force constant.
+randDegree = 0.5;
 
 meanW_a = mean(W_a);        % initial mean of W_a and W_m
 meanW_m = mean(W_m);
