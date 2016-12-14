@@ -20,11 +20,13 @@ global gSize sightRadius;   %make global so that functions do not need them as i
 %Parameters
 timesteps = 1000000;        % how many timesteps to take; large fail-safe exit
 repulsionRadius = 1;        % how close locusts has to be before repelling force sets in
-s = repulsionRadius*15;     % speed of agents
-sightRadius = 8*repulsionRadius;                            % how close the locusts has to be to interact with each other
-N = 300;                    % nbr agents
+s = repulsionRadius*1;     % speed of agents
+sightRadius = 4*repulsionRadius;                            % how close the locusts has to be to interact with each other
+radiusPlot = [s, s];
+N = 2;                    % nbr agents
 density = 2;                %density
-gSize = sightRadius*sqrt(N/density);                        % grid side length
+% gSize = sightRadius*sqrt(N/density);                        % grid side length
+gSize = 10;
 tTransient = 100;           % transient time from starting conditions for fitness calculation
 tFit = 500;                 % nbr of timesteps for fitness calculation
 dt = 0.02;                  % time step
@@ -32,12 +34,13 @@ dt = 0.02;                  % time step
 % W_m = ones(1,N);
 upperLimit = 1;             % Limit for W_a and W_m. Checks this after evolution...
 lowerLimit = -1;            % ...so that W_a and W_m donot cross boundary
-W_a(1:N) = 1;
+W_a(1:N) = 0;
 W_m(1:N) = 1;
 % W_a = lowerLimit + rand(1, N) * (upperLimit-lowerLimit);    % reaction to approaching locusts
 % W_m = lowerLimit + rand(1, N) * (upperLimit-lowerLimit);    % reaction to moving away locusts
 W_r = 2;                    % repelling force constant.
-randDegree = 0.5;
+% randDegree = 0.1;
+randDegree = 0;
 
 meanW_a = mean(W_a);        % initial mean of W_a and W_m
 meanW_m = mean(W_m);
@@ -64,9 +67,12 @@ newAgentVel = zeros(2, N);
 
 % ------------ Initialization ------------
 % Random agent initial values
-x = rand(1,N)*gSize;
-y = rand(1,N)*gSize;
-angles = rand(1,N)*2*pi;                    % velocity direction
+% x = rand(1,N)*gSize;
+% y = rand(1,N)*gSize;
+y = [5 4.7];
+x = [4.5 5];
+angles = [0 0.2];
+% angles = rand(1,N)*2*pi;                    % velocity direction
 agentVel = s*[cos(angles); sin(angles)];    % initial velocity
 
 transientFlag = true;                       % checks whether transient period is ON;...
@@ -76,7 +82,7 @@ fprintf('N(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', numel(find(W_a>0
 
 %start: timeStep for-loop
 for i_time = 1:timesteps
-
+disp('--------------------------------------------')
     %expands grid in order to use boundary conditions (see function
     %description for more detail)
     [x2, y2, ID2] = ExpandGridForBoundaryConditions(x, y);
@@ -84,11 +90,10 @@ for i_time = 1:timesteps
     % This FOR-LOOP Calculates and updates Forces
     % start: agent for-loop
     for i = 1:N
-
         agentID = 1:N;                                  %used to get the velocity related to locusts later on.
 
         %Get all relative positions to locust i
-        r = [x - x(i); y - y(i)];
+        r = [x - x(i); y - y(i)]
         agentID(i) = [];                                %remove comparison to it self
         r(:,i) = [];
         
@@ -116,7 +121,7 @@ for i_time = 1:timesteps
 %         for j = 1:nbrInterestingAgents
 %             v(:,j) = agentVel(:,i) - agentVel(:, agentID(j) );
 %         end
-        v = [agentVel(1,i) - agentVel(1, agentID); agentVel(2,i) - agentVel(2, agentID)];
+        v = [agentVel(1, agentID) - agentVel(1,i); agentVel(2, agentID) - agentVel(2,i)];
         
         %in this FOR-LOOP calculate forces resulting from approaching and
         %moving awway locusts
@@ -124,7 +129,7 @@ for i_time = 1:timesteps
         f_aANDm = zeros(2, nbrInterestingAgents);
         nbrInSightRadius = 0;
         nbrInrepellingRange = 0;
-        relVel = sum(v'.*r',2)./r_dist';
+        relVel = sum(v'.*r',2)./r_dist'
         for j = 1:nbrInterestingAgents
             if( r_dist(j) ~= 0)
 %                 relVel(j) = v(:,j)'*r(:,j)/r_dist(j);
@@ -135,9 +140,11 @@ for i_time = 1:timesteps
         nApproaching = sum(relVel > 0);
         nMovingAway = sum(relVel < 0);
         if nApproaching > 0
+            disp('approaching')
             f_aANDm(:, relVel < 0) = f_aANDm(:, relVel < 0)*W_a(1, i)/nApproaching;     %approaching
         end
         if nMovingAway > 0
+            disp('moving away')
             f_aANDm(:, relVel > 0) = f_aANDm(:, relVel > 0)*W_m(1, i)/nMovingAway;     %moving away
         end
 
@@ -153,11 +160,14 @@ for i_time = 1:timesteps
         else
             f_r = [0;0];
         end
+        f_r = [0;0];
 
         %get forces in theta- (angle-) direction
         forceDirection = [-sin(angles(i)), cos(angles(i))];
         f_theta = sum(forceDirection*f_aANDm);                  %from approaching and moving away locusts
-        f_theta = f_theta + forceDirection*f_r;                 %from repelling agents
+%         f_theta = f_theta + forceDirection*f_r                 %from repelling agents
+        f_change = f_theta*dt;
+        f_changeDeg = f_change*180/pi;
 
 %         %calculate cost and benefit
 %         if transientFlag == true                                % when trasient period is ON, fitness params
@@ -176,7 +186,7 @@ for i_time = 1:timesteps
 
         %update velocity
         if( ~isempty(f_theta) )
-            newAngles(i) = angles(i) + f_theta*dt + (rand(1)*2 - 1)*randDegree;
+            newAngles(i) = angles(i) + f_theta*10*dt + (rand(1)*2 - 1)*randDegree;
         else
             newAngles(i) = angles(i)  + (rand(1)*2 - 1)*randDegree;
         end
@@ -193,21 +203,26 @@ for i_time = 1:timesteps
     y = mod(y-1, gSize) + 1;
     
 %FOR TESTING - Plot new velocities to see effect
-%     plot(x,y,'.')
-%     quiver(x,y,newAgentVel(1,:), newAgentVel(2,:), 0, 'r');
-%     axis([0 gSize 0 gSize]);
-%     drawnow
-%     viscircles([x',y'], radiusPlot);
-%     waitforbuttonpress
-    
-    %Plot agents with vectors
     hold off
-%     quiver(x,y,agentVel(1,:), agentVel(2,:), 0);
     plot(x,y,'.')
     hold on
-    plot(x(1), y(1), 'r.')
+    quiver(x,y,newAgentVel(1,:), newAgentVel(2,:), 'r');
     axis([0 gSize 0 gSize]);
+    viscircles([x',y'], radiusPlot);
     drawnow
+    waitforbuttonpress
+    
+    %Plot agents with vectors
+% %     if (mod(i_time, 20) == 0 && i_time>2000)
+%         hold off
+%             quiver(x,y,agentVel(1,:), agentVel(2,:), 0);
+% %         plot(x,y,'.')
+%         hold on
+% %         plot(x(1), y(1), 'r.')
+%         axis([0 gSize 0 gSize]);
+%         drawnow
+%         waitforbuttonpress
+% %     end
 
 %     %Evolutionary part (Fitness, Selection, Mutation, New Generation)      
 %     if mod(i_time, tTransient+tFit) == 0                    % new generation is calculated after 
