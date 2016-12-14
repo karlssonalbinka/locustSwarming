@@ -175,9 +175,9 @@ for i_time = 1:timesteps
 
         %update velocity
         if( ~isempty(f_theta) )
-            newAngles(i) = angles(i) + f_theta*dt;
+            newAngles(i) = angles(i) + f_theta*dt + (rand(1)*2 - 1)*randDegree;
         else
-            newAngles(i) = angles(i);
+            newAngles(i) = angles(i)  + (rand(1)*2 - 1)*randDegree;
         end
         newAgentVel(:,i) = s*[cos(newAngles(i)); sin(newAngles(i))];
     end
