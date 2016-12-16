@@ -16,8 +16,8 @@
 clear all;
 clc;
 
-densities = 0.1:0.1:2;
-% densities = [1, 2]; % for testing
+densities = 0.1:0.2:1;
+% densities = 2.2;
 nbrAverage = 3;
 
 global gSize sightRadius;   %make global so that functions do not need them as input.
@@ -61,6 +61,7 @@ for i_density = 1:nbrDensities
     gSize = sightRadius*sqrt(N/density);            % grid side length
     
     for i_avg = 1:nbrAverage
+        tic
         % ------------ Initialization ------------
         x = rand(1,N)*gSize;
         y = rand(1,N)*gSize;
@@ -81,6 +82,8 @@ for i_density = 1:nbrDensities
         
         %start: timeStep for-loop
         for i_time = 1:timesteps
+            cost            = zeros(1, N);
+            benefit         = zeros(1, N);
             
             %expands grid in order to use boundary conditions (see function
             %description for more detail)
@@ -166,7 +169,8 @@ for i_density = 1:nbrDensities
                 else                                                    % fitness period; time calculate fitness params
                     agentsInRepulsionRadius = find(r_dist < repulsionRadius);
                     for j = 1:length(agentsInRepulsionRadius)
-                        direction = sum((r(:, j)/r_dist(j)) .* v(:,j));
+%                         direction = sum((r(:, j)/r_dist(j)) .* v(:,j));
+                        direction = r(:,j)'*agentVel(:,i);
                         cost(1, i) = cost(1, i) + (c_r * heaviside(-direction) + c_f * heaviside(direction));
                         benefit(1, i) = benefit(1, i) + b * heaviside(direction);
                     end
@@ -313,11 +317,29 @@ for i_density = 1:nbrDensities
     %end: average loop
     polarization(i_density) = sum(avgPolarization)/nbrAverage;
     finalW(:, i_density)    = sum(avgW, 2)/nbrAverage;
+    toc
+    
+    save('densityRun_v2', 'densities', 'polarization', 'finalW', 'N', 'nbrAverage', 'repulsionRadius', 's', 'sightRadius',...
+    'tTransient', 'tFit', 'dt', 'upperLimit', 'lowerLimit', 'W_r', 'randDegree', 'c_r', 'c_f', 'b', 'W_b','sigma_mu','tolerance')
     
 end
 %end: looping over densities
 
 %For saving variables
-save('densityRun', 'densities', 'polarization', 'finalW', 'N', 'nbrAverage', 'repulsionRadius', 's', 'sightRadius',...
+save('densityRun_v2', 'densities', 'polarization', 'finalW', 'N', 'nbrAverage', 'repulsionRadius', 's', 'sightRadius',...
     'tTransient', 'tFit', 'dt', 'upperLimit', 'lowerLimit', 'W_r', 'randDegree', 'c_r', 'c_f', 'b', 'W_b','sigma_mu','tolerance')
 
+%%
+figure(1)
+hold off
+plot(densities, finalW(1,:))
+hold on
+plot(densities, finalW(2,:))
+legend('W_a', 'W_m')
+title('final (optimized) W_a and W_b after EA - Long run at school')
+xlabel('density')
+
+figure(2)
+plot(densities, polarization);
+title('polarization')
+xlabel('density')
