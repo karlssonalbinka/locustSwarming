@@ -13,11 +13,11 @@
 %Right now W_a and W_m is set to constants but in the evolutionary
 %algorithm me want each locust to be randomed initial W_a and W_m.
 
-clear all;
-clc;
+%clear all;
+%clc;
 
-% densities = 1:0.2:2;
-densities = 2;
+densities = 0.1:0.2:1;
+%densities = 2;
 nbrAverage = 3;
 
 global gSize sightRadius;   %make global so that functions do not need them as input.
@@ -27,7 +27,7 @@ timesteps = 1000000;        % how many timesteps to take; large fail-safe exit
 repulsionRadius = 1;        % how close locusts has to be before repelling force sets in
 s = repulsionRadius*15;     % speed of agents
 sightRadius = 8*repulsionRadius;                            % how close the locusts has to be to interact with each other
-N = 250;                    % nbr agents
+N = 300;                    % nbr agents
 tTransient = 100;           % transient time from starting conditions for fitness calculation
 tFit = 500;                 % nbr of timesteps for fitness calculation
 dt = 0.02;                  % time step
@@ -59,7 +59,7 @@ passedTime = 0;
 for i_density = 1:nbrDensities
     density = densities(i_density);
     gSize = sightRadius*sqrt(N/density);            % grid side length
-    
+    %fprintf('density = %f /n', density);
     for i_avg = 1:nbrAverage
         tic
         % ------------ Initialization ------------
@@ -78,7 +78,7 @@ for i_density = 1:nbrDensities
         transientFlag = true;                       % checks whether transient period is ON;...
         transientPeriod = 0;                        % ...doesnot perform fitness calculation
         
-        fprintf('START AVERAGE %d \nN(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', i_avg, numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
+%        fprintf('START AVERAGE %d \nN(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', i_avg, numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
         
         %start: timeStep for-loop
         for i_time = 1:timesteps
@@ -298,14 +298,14 @@ for i_density = 1:nbrDensities
                 meanW_m = mean(W_m);
                 
                 if norm(lastMeanW_a - meanW_a) < tolerance && norm(lastMeanW_m - meanW_m) < tolerance
-                    fprintf('N(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
+                    %fprintf('N(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
                     break;                                        % converged to stable values for evolutionary traits
                 else
                     lastMeanW_a = meanW_a;
                     lastMeanW_m = meanW_m;
                 end
                 
-                fprintf('N(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
+                %fprintf('N(W_a)>0: %d, mean:%2.4f, N(W_m)>0: %d, mean:%2.4f\n', numel(find(W_a>0)), meanW_a, numel(find(W_m>0)), meanW_m);
             end
             %end: Evolutionary part
             
@@ -320,9 +320,9 @@ for i_density = 1:nbrDensities
     finalW(:, i_density)    = sum(avgW, 2)/nbrAverage;
     passedTime = passedTime + toc;
     
-    save('densityRun_v2.1_test', 'densities', 'polarization', 'finalW', 'N', 'nbrAverage', 'repulsionRadius', 's', 'sightRadius',...
-    'tTransient', 'tFit', 'dt', 'upperLimit', 'lowerLimit', 'W_r', 'randDegree', 'c_r', 'c_f', 'b', 'W_b','sigma_mu','tolerance', 'passedTime')
-    
+%     save('densityRun_v2.1', 'densities', 'polarization', 'finalW', 'N', 'nbrAverage', 'repulsionRadius', 's', 'sightRadius',...
+%     'tTransient', 'tFit', 'dt', 'upperLimit', 'lowerLimit', 'W_r', 'randDegree', 'c_r', 'c_f', 'b', 'W_b','sigma_mu','tolerance', 'passedTime')
+    save('simulationProgress_part2')
 end
 %end: looping over densities
 
